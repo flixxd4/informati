@@ -59,8 +59,8 @@ class FHGO:
         tk.Label(self.root, text="Type in Your gamesession name", bg=self.color).pack(pady=10)
         text = tk.Entry(self.root)
         text.pack(padx=10)
-        tk.Button(self.root, text="Submit", bg=self.color, command= lambda: creategameses(text)).pack(pady=10)
-        tk.Button(self.root, text="join gamesession", bg=self.color, command= lambda: joings(text)).pack(pady=10)
+        tk.Button(self.root, text="Create session", bg=self.color, command= lambda: creategameses(text)).pack(pady=10)
+        tk.Button(self.root, text="join session", bg=self.color, command= lambda: joings(text)).pack(pady=10)
 
         def creategameses(gs):
             self.online_player = 1
@@ -172,9 +172,8 @@ class FHGO:
         def place_stone(event):
             if not self.win:
                 row, col = int((event.y - 25) / 50), int((event.x - 25) / 50)
-                stone = 1 if not self.white else 2
                 self.white = not self.white
-
+                stone = 1 if not self.white else 2
                 if self.player[row][col] == 0:
                     self.player[row][col] = stone
                     self.root.after(300, lambda: CheckRules(1, 2))
@@ -182,13 +181,14 @@ class FHGO:
                     image_stone()
                     if self.playsonline:
                         self.sendstones()
-                        self.getstones()
         def wingame():
             if self.loosestone == 2:
                 text = "white"
             elif self.loosestone == 1:
                 text = "black"
-
+            if self.playsonline:
+                self.player = np.zeros((gridsize, gridsize))
+                self.sendstones()
             self.win = True
             winlabel = tk.Label(self.root, text=f"{text} wins!", font="sans-serif")
             winlabel.place(x=gridsize * 50 / 2, y=gridsize * 50 / 2)
@@ -203,7 +203,20 @@ class FHGO:
             with open(self.safefile, "w") as f:
                 f.write(str(vanilla_arr))
 
+        def getstones():
+            array = requests.get("http://felixhempel.xyz/go/")
+            try:
+                self.player = np.array(ast.literal_eval(array.text))
+            except:
+                print("error")
+
+            image_stone()
+            if not self.win:
+                self.root.after(1000, lambda: getstones())
+
         canvas.bind("<Button-1>", place_stone)
+        if self.playsonline == True:
+            getstones()
 
     def sendstones(self):
         print(self.player)
@@ -212,9 +225,3 @@ class FHGO:
         requests.post(f'http://felixhempel.xyz/go/?post={msg}')
 
 
-    def getstones(self):
-        array = requests.get("http://felixhempel.xyz/go/")
-        try:
-            self.player = np.array(ast.literal_eval(array.text))
-        except:
-            print("error")
