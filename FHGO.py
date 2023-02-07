@@ -56,21 +56,33 @@ class FHGO:
 
         self.root.config(bg=self.color)
 
-        tk.Label(self.root, text="Type in Your gamesession name", bg=self.color).pack(pady=10)
+        label1 = tk.Label(self.root, text="Type in Your gamesession name", bg=self.color)
+        label1.pack(pady=10)
         text = tk.Entry(self.root)
         text.pack(padx=10)
-        tk.Button(self.root, text="Create session", bg=self.color, command= lambda: creategameses(text)).pack(pady=10)
-        tk.Button(self.root, text="join session", bg=self.color, command= lambda: joings(text)).pack(pady=10)
+        button1 = tk.Button(self.root, text="Create session", bg=self.color, command= lambda: creategameses(text))
+        button1.pack(pady=10)
+        button2 = tk.Button(self.root, text="join session", bg=self.color, command= lambda: joings(text))
+        button2.pack(pady=10)
+
+        widgets = [label1, text, button1, button2]
+
+        def delete():
+            for widget in widgets:
+                widget.pack_forget()
+
 
         def creategameses(gs):
             self.online_player = 1
             requests.get(f"http://felixhempel.xyz/go/gs/?creategs={gs.get()}")
+            delete()
             self.StartFHGoGame()
 
         def joings(gs):
             self.online_player = 2
             req = requests.get(f"http://felixhempel.xyz/go/gs/?joings={gs.get()}")
             if req.text == "true":
+                delete()
                 self.StartFHGoGame()
 
     def StartFHGoGame(self, gridsize=9, debugmode=None):
@@ -212,16 +224,14 @@ class FHGO:
 
             image_stone()
             if not self.win:
-                self.root.after(1000, lambda: getstones())
+                self.root.after(100, lambda: getstones())
 
         canvas.bind("<Button-1>", place_stone)
         if self.playsonline == True:
             getstones()
 
     def sendstones(self):
-        print(self.player)
         msg = str(self.player).replace(" ", ",").replace("\n", " ")
-        print(msg)
         requests.post(f'http://felixhempel.xyz/go/?post={msg}')
 
 
